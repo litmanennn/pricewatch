@@ -1,10 +1,6 @@
 services:
   pricewatch:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    image: pricewatch:latest
+    image: ghcr.io/litmanennn/pricewatch:latest
 
     container_name: pricewatch
 
