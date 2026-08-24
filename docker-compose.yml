@@ -1,0 +1,26 @@
+services:
+  pricewatch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: pricewatch:latest
+
+    container_name: pricewatch
+
+    environment:
+      TZ: Europe/Helsinki
+
+      DB_FILE_NAME: /app/data/pricewatch.db
+
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+
+      PRICE_CHECK_INTERVAL_HOURS: ${PRICE_CHECK_INTERVAL_HOURS:-6}
+
+    volumes:
+      - /DATA/AppData/pricewatch:/app/data
+
+    ports:
+      - "3000:3000"
+
+    restart: unless-stopped
