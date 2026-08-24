@@ -4,6 +4,7 @@ import {
 
 import {
   db,
+  ensureDatabaseInitialized,
 } from "@/db"
 
 import {
@@ -16,6 +17,9 @@ import {
 
 
 export async function checkAllProducts() {
+
+  ensureDatabaseInitialized()
+
 
   const startedAt =
     new Date()
@@ -102,8 +106,8 @@ export async function checkAllProducts() {
         console.log(
           `[PriceWatch] Ei muutosta: ${product.name}`
         )
-      }
 
+      }
 
     } catch (error) {
 
@@ -114,6 +118,7 @@ export async function checkAllProducts() {
         `[PriceWatch] Tuotteen tarkistus epäonnistui: ${product.name}`,
         error
       )
+
     }
   }
 

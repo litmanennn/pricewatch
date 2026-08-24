@@ -4,6 +4,7 @@ import {
 
 import {
   db,
+  ensureDatabaseInitialized,
 } from "@/db"
 
 import {
@@ -21,21 +22,30 @@ import {
 
 
 export type CheckProductResult = {
-  product: typeof products.$inferSelect
+  product:
+    typeof products.$inferSelect
 
-  previousPrice: number
+  previousPrice:
+    number
 
-  newPrice: number
+  newPrice:
+    number
 
-  priceDropped: boolean
+  priceDropped:
+    boolean
 
-  priceIncreased: boolean
+  priceIncreased:
+    boolean
 
-  priceChanged: boolean
+  priceChanged:
+    boolean
 
   discord: {
-    configured: boolean
-    sent: boolean
+    configured:
+      boolean
+
+    sent:
+      boolean
   }
 }
 
@@ -44,9 +54,8 @@ export async function checkProduct(
   productId: number
 ): Promise<CheckProductResult> {
 
-  /*
-   * Haetaan nykyinen tuote tietokannasta.
-   */
+  ensureDatabaseInitialized()
+
 
   const existingProducts =
     await db
@@ -70,6 +79,7 @@ export async function checkProduct(
     throw new Error(
       "Tuotetta ei löytynyt."
     )
+
   }
 
 
@@ -78,12 +88,9 @@ export async function checkProduct(
     throw new Error(
       "Tuotteen seuranta ei ole aktiivinen."
     )
+
   }
 
-
-  /*
-   * Haetaan tämänhetkinen Hinta.fi-hinta.
-   */
 
   const hintaProduct =
     await fetchHintaProduct(
@@ -120,11 +127,6 @@ export async function checkProduct(
     new Date()
 
 
-  /*
-   * Tallennetaan jokainen onnistunut
-   * tarkistus hintahistoriaan.
-   */
-
   await db
     .insert(
       priceHistory
@@ -140,10 +142,6 @@ export async function checkProduct(
         now,
     })
 
-
-  /*
-   * Päivitetään tuotteen nykyinen tila.
-   */
 
   await db
     .update(
@@ -170,10 +168,6 @@ export async function checkProduct(
     )
 
 
-  /*
-   * Discord-hälytys vain hinnan laskiessa.
-   */
-
   let discord = {
     configured:
       Boolean(
@@ -186,7 +180,9 @@ export async function checkProduct(
   }
 
 
-  if (priceDropped) {
+  if (
+    priceDropped
+  ) {
 
     discord =
       await sendPriceDropNotification({
@@ -203,12 +199,9 @@ export async function checkProduct(
         lowestPrice:
           newLowestPrice,
       })
+
   }
 
-
-  /*
-   * Haetaan päivitetty rivi takaisin.
-   */
 
   const updatedProducts =
     await db
@@ -227,11 +220,14 @@ export async function checkProduct(
     updatedProducts[0]
 
 
-  if (!updatedProduct) {
+  if (
+    !updatedProduct
+  ) {
 
     throw new Error(
       "Päivitetyn tuotteen lukeminen epäonnistui."
     )
+
   }
 
 

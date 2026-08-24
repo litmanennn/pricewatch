@@ -8,6 +8,7 @@ import {
 
 import {
   db,
+  ensureDatabaseInitialized,
 } from "@/db"
 
 import {
@@ -27,10 +28,15 @@ export async function DELETE(
   request: Request,
   context: RouteContext
 ) {
+
   void request
 
 
   try {
+
+    ensureDatabaseInitialized()
+
+
     const {
       id,
     } =
@@ -47,6 +53,7 @@ export async function DELETE(
       ) ||
       productId <= 0
     ) {
+
       return NextResponse.json(
         {
           error:
@@ -56,6 +63,7 @@ export async function DELETE(
           status: 400,
         }
       )
+
     }
 
 
@@ -77,6 +85,7 @@ export async function DELETE(
 
 
     if (!product) {
+
       return NextResponse.json(
         {
           error:
@@ -86,12 +95,9 @@ export async function DELETE(
           status: 404,
         }
       )
+
     }
 
-
-    /*
-     * Poistetaan ensin hintahistoria.
-     */
 
     await db
       .delete(
@@ -104,10 +110,6 @@ export async function DELETE(
         )
       )
 
-
-    /*
-     * Sitten itse tuote.
-     */
 
     await db
       .delete(
@@ -135,6 +137,7 @@ export async function DELETE(
     })
 
   } catch (error) {
+
     console.error(
       "Tuotteen poistaminen epäonnistui:",
       error
