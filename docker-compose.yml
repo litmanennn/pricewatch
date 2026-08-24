@@ -10,11 +10,8 @@ services:
 
     environment:
       TZ: Europe/Helsinki
-
       DB_FILE_NAME: /app/data/pricewatch.db
-
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
-
       PRICE_CHECK_INTERVAL_HOURS: ${PRICE_CHECK_INTERVAL_HOURS:-6}
 
     volumes:
@@ -24,3 +21,11 @@ services:
       - "3000:3000"
 
     restart: unless-stopped
+
+    networks:
+      - media_net
+
+
+networks:
+  media_net:
+    external: true
