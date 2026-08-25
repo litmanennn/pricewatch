@@ -14,7 +14,32 @@ permissions:
 
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+
+        with:
+          node-version: 24
+          cache: npm
+
+
+      - name: Install dependencies
+        run: npm ci
+
+
+      - name: Lint
+        run: npm run lint
+
+
   publish:
+    needs: lint
     runs-on: ubuntu-latest
 
     steps:
@@ -46,9 +71,7 @@ jobs:
           context: .
           file: ./Dockerfile
 
-          platforms: |
-            linux/amd64
-            linux/arm64
+          platforms: linux/arm64
 
           push: true
 
