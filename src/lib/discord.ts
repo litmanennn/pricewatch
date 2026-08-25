@@ -151,7 +151,7 @@ export async function sendPriceDropNotification(
 
                 footer: {
                   text:
-                    "PriceWatch • Hinta.fi",
+                    "PriceWatch",
                 },
 
                 timestamp:

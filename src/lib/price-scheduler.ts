@@ -19,6 +19,8 @@ type PriceSchedulerGlobal = {
   priceWatchLastCheckAt?: string | null
 
   priceWatchSchedulerRunning?: boolean
+
+  priceWatchIntervalHours?: number
 }
 
 
@@ -52,32 +54,46 @@ function getIntervalHours() {
 }
 
 
-function getIntervalMilliseconds() {
-  return (
-    getIntervalHours() *
-    60 *
-    60 *
-    1000
-  )
-}
+export async function runPriceCheck() {
+  if (
+    globalForPriceWatch
+      .priceWatchSchedulerRunning
+  ) {
+    return null
+  }
 
 
-async function runScheduledCheck() {
   globalForPriceWatch
     .priceWatchSchedulerRunning =
       true
 
+
+  try {
+    const result =
+      await checkAllProducts()
+
+    globalForPriceWatch
+      .priceWatchLastCheckAt =
+        new Date().toISOString()
+
+    return result
+
+  } finally {
+    globalForPriceWatch
+      .priceWatchSchedulerRunning =
+        false
+  }
+}
+
+
+async function runScheduledCheck() {
   globalForPriceWatch
     .priceWatchNextCheckAt =
       null
 
 
   try {
-    await checkAllProducts()
-
-    globalForPriceWatch
-      .priceWatchLastCheckAt =
-        new Date().toISOString()
+    await runPriceCheck()
 
   } catch (error) {
     console.error(
@@ -85,9 +101,6 @@ async function runScheduledCheck() {
       error
     )
   } finally {
-    globalForPriceWatch
-      .priceWatchSchedulerRunning =
-        false
 
     scheduleNextCheck()
   }
@@ -95,8 +108,19 @@ async function runScheduledCheck() {
 
 
 function scheduleNextCheck() {
+  const intervalHours =
+    getIntervalHours()
+
   const intervalMilliseconds =
-    getIntervalMilliseconds()
+    intervalHours *
+    60 *
+    60 *
+    1000
+
+
+  globalForPriceWatch
+    .priceWatchIntervalHours =
+      intervalHours
 
 
   const nextCheck =
@@ -132,6 +156,7 @@ export function startPriceScheduler() {
     globalForPriceWatch
       .priceWatchSchedulerStarted
   ) {
+    syncSchedulerInterval()
     return
   }
 
@@ -155,7 +180,47 @@ export function startPriceScheduler() {
 }
 
 
+function syncSchedulerInterval() {
+  const intervalHours =
+    getIntervalHours()
+
+
+  if (
+    !globalForPriceWatch
+      .priceWatchSchedulerStarted ||
+    globalForPriceWatch
+      .priceWatchSchedulerRunning ||
+    globalForPriceWatch
+      .priceWatchIntervalHours ===
+        intervalHours
+  ) {
+    return
+  }
+
+
+  if (
+    globalForPriceWatch
+      .priceWatchTimer
+  ) {
+    clearTimeout(
+      globalForPriceWatch
+        .priceWatchTimer
+    )
+  }
+
+
+  console.log(
+    `[PriceWatch] Tarkistusväli muuttui: ${intervalHours} h.`
+  )
+
+
+  scheduleNextCheck()
+}
+
+
 export function getPriceSchedulerStatus() {
+  syncSchedulerInterval()
+
   return {
     started:
       Boolean(

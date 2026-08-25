@@ -10,12 +10,10 @@ import {
 import {
   Clock3,
   ExternalLink,
-  Gauge,
   PackageSearch,
   Plus,
   RefreshCw,
   Search,
-  Sparkles,
   Trash2,
   TrendingDown,
   TrendingUp,
@@ -36,11 +34,9 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 
 import { Input } from "@/components/ui/input"
@@ -574,6 +570,77 @@ export default function Home() {
   }
 
 
+  async function handleCheckAll() {
+    void handleCheckNow
+
+    const activeProductIds =
+      products
+        .filter((product) => product.active)
+        .map((product) => product.id)
+
+
+    setCheckingProducts(
+      new Set(activeProductIds)
+    )
+
+
+    try {
+      const response =
+        await fetch(
+          "/api/scheduler",
+          {
+            method: "POST",
+          }
+        )
+
+
+      const data =
+        await response.json()
+
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Hintojen tarkistus epäonnistui."
+        )
+      }
+
+
+      const productsResponse =
+        await fetch(
+          "/api/products",
+          {
+            cache: "no-store",
+          }
+        )
+
+
+      if (!productsResponse.ok) {
+        throw new Error(
+          "Tuotteiden päivittäminen epäonnistui."
+        )
+      }
+
+
+      setProducts(
+        await productsResponse.json()
+      )
+
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Hintojen tarkistus epäonnistui."
+      )
+
+    } finally {
+      setCheckingProducts(
+        new Set()
+      )
+    }
+  }
+
+
   /*
    * TUOTTEEN POISTO
    */
@@ -758,7 +825,7 @@ export default function Home() {
 
       <div className="border-b bg-background/80 backdrop-blur-xl">
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-4 sm:px-6 lg:px-8">
 
           <div className="flex items-center gap-3">
 
@@ -782,15 +849,11 @@ export default function Home() {
                   variant="secondary"
                   className="hidden sm:inline-flex"
                 >
-                  Hinta.fi
+                  Hintavahti
                 </Badge>
 
               </div>
 
-
-              <p className="hidden text-xs text-muted-foreground sm:block">
-                Oma hintavahti
-              </p>
 
             </div>
 
@@ -809,17 +872,6 @@ export default function Home() {
             }}
           >
 
-            <DialogTrigger
-              render={<Button />}
-            >
-
-              <Plus className="size-4" />
-
-              Lisää tuote
-
-            </DialogTrigger>
-
-
             <DialogContent className="sm:max-w-lg">
 
               <form
@@ -835,13 +887,6 @@ export default function Home() {
                   </DialogTitle>
 
 
-                  <DialogDescription>
-                    Liitä Hinta.fi-tuotteen
-                    osoite. PriceWatch hakee
-                    nykyisen hinnan ja aloittaa
-                    seurannan automaattisesti.
-                  </DialogDescription>
-
                 </DialogHeader>
 
 
@@ -850,14 +895,14 @@ export default function Home() {
                   <div className="grid gap-2">
 
                     <Label htmlFor="url">
-                      Hinta.fi-tuotelinkki
+                      Tuotelinkki
                     </Label>
 
 
                     <Input
                       id="url"
                       type="url"
-                      placeholder="https://hinta.fi/..."
+                      placeholder="https://verkkokauppa.fi/tuote/..."
                       value={url}
 
                       onChange={(event) =>
@@ -869,14 +914,6 @@ export default function Home() {
                       required
                     />
 
-
-                    <p className="text-xs leading-5 text-muted-foreground">
-                      Nykyinen hinta tallennetaan
-                      lähtöhinnaksi. PriceWatch
-                      ilmoittaa Discordiin, jos
-                      myöhemmässä tarkistuksessa
-                      löytyy alempi hinta.
-                    </p>
 
                   </div>
 
@@ -950,74 +987,69 @@ export default function Home() {
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8 lg:py-10">
 
 
-        {/* HERO */}
+        <div className="mb-4 flex justify-end gap-2">
 
-        <section className="mb-8">
-
-          <Badge
-            variant="outline"
-            className="mb-3 rounded-full bg-background/60 px-3 py-1"
+          <Button
+            onClick={() => setDialogOpen(true)}
           >
 
-            <Sparkles className="mr-1 size-3.5" />
+            <Plus className="size-4" />
 
-            Automaattinen hintaseuranta
+            Lisää tuote
 
-          </Badge>
+          </Button>
 
+          {!productsLoading && (
+            <Button
+              variant="outline"
+              disabled={
+                products.length === 0 ||
+                checkingProducts.size > 0
+              }
+              onClick={handleCheckAll}
+            >
 
-          <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+            <RefreshCw
+              className={cn(
+                "size-4",
+                checkingProducts.size > 0 && "animate-spin"
+              )}
+            />
 
-            Seuraa hintoja.
+            {checkingProducts.size > 0
+              ? "Tarkistetaan..."
+              : "Tarkista kaikki"}
 
-            <span className="text-muted-foreground">
-              {" "}
-              PriceWatch huomaa laskun.
-            </span>
+            </Button>
+          )}
 
-          </h2>
-
-
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-
-            Lisää Hinta.fi-tuote kerran.
-            PriceWatch tallentaa lähtöhinnan
-            ja seuraa hinnan muutoksia
-            puolestasi.
-
-          </p>
-
-        </section>
+        </div>
 
 
         {/* STATS */}
 
-        <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
 
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-border/70 py-0 shadow-sm">
 
-            <CardContent className="flex items-center gap-4 p-5">
+            <CardContent className="relative flex items-center justify-center p-5 pl-20">
 
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-secondary">
+              <div className="absolute left-5 top-1/2 flex size-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-secondary">
 
-                <PackageSearch className="size-5" />
+                <PackageSearch className="size-6" />
 
               </div>
 
 
-              <div>
+              <div className="text-center">
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground">
                   Seurannassa
                 </p>
 
-                <p className="mt-0.5 text-2xl font-bold tracking-tight">
+                <p className="text-3xl font-bold tracking-tight">
                   {activeCount}
-                </p>
-
-                <p className="text-xs text-muted-foreground">
-                  aktiivista tuotetta
                 </p>
 
               </div>
@@ -1027,29 +1059,25 @@ export default function Home() {
           </Card>
 
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-border/70 py-0 shadow-sm">
 
-            <CardContent className="flex items-center gap-4 p-5">
+            <CardContent className="relative flex items-center justify-center p-5 pl-20">
 
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="absolute left-5 top-1/2 flex size-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-primary/10">
 
-                <TrendingDown className="size-5 text-primary" />
+                <TrendingDown className="size-6 text-primary" />
 
               </div>
 
 
-              <div>
+              <div className="text-center">
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground">
                   Hinta laskenut
                 </p>
 
-                <p className="mt-0.5 text-2xl font-bold tracking-tight">
+                <p className="text-3xl font-bold tracking-tight">
                   {discountedCount}
-                </p>
-
-                <p className="text-xs text-muted-foreground">
-                  tuotetta alle lähtöhinnan
                 </p>
 
               </div>
@@ -1061,24 +1089,24 @@ export default function Home() {
 
           {/* VIIMEISIN TARKISTUS */}
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-border/70 py-0 shadow-sm">
 
-            <CardContent className="flex items-center gap-4 p-5">
+            <CardContent className="relative flex items-center justify-center p-5 pl-20">
 
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-secondary">
+              <div className="absolute left-5 top-1/2 flex size-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-secondary">
 
-                <Clock3 className="size-5" />
+                <Clock3 className="size-6" />
 
               </div>
 
 
-              <div className="min-w-0">
+              <div className="min-w-0 text-center">
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground">
                   Viimeisin tarkistus
                 </p>
 
-                <p className="mt-0.5 truncate text-lg font-bold tracking-tight">
+                <p className="truncate text-xl font-bold tracking-tight">
 
                   {latestCheckAt
                     ? formatCheckTime(
@@ -1090,10 +1118,6 @@ export default function Home() {
 
                 </p>
 
-                <p className="text-xs text-muted-foreground">
-                  viimeisin hintahaku
-                </p>
-
               </div>
 
             </CardContent>
@@ -1103,33 +1127,33 @@ export default function Home() {
 
           {/* SEURAAVA TARKISTUS */}
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-border/70 py-0 shadow-sm">
 
-            <CardContent className="flex items-center gap-4 p-5">
+            <CardContent className="relative flex items-center justify-center p-5 pl-20">
 
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="absolute left-5 top-1/2 flex size-14 -translate-y-1/2 items-center justify-center rounded-2xl bg-primary/10">
 
                 {scheduler?.running ? (
 
-                  <RefreshCw className="size-5 animate-spin text-primary" />
+                  <RefreshCw className="size-6 animate-spin text-primary" />
 
                 ) : (
 
-                  <Clock3 className="size-5 text-primary" />
+                  <Clock3 className="size-6 text-primary" />
 
                 )}
 
               </div>
 
 
-              <div className="min-w-0">
+              <div className="min-w-0 text-center">
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground">
                   Seuraava tarkistus
                 </p>
 
 
-                <p className="mt-0.5 truncate text-lg font-bold tracking-tight">
+                <p className="truncate text-xl font-bold tracking-tight">
 
                   {scheduler?.running
 
@@ -1176,18 +1200,6 @@ export default function Home() {
                 Seurattavat tuotteet
               </h3>
 
-
-              <p className="text-sm text-muted-foreground">
-
-                {products.length}{" "}
-
-                {products.length === 1
-                  ? "tuote"
-                  : "tuotetta"}{" "}
-
-                tallennettuna
-
-              </p>
 
             </div>
 
@@ -1264,18 +1276,9 @@ export default function Home() {
               </h3>
 
 
-              <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-                Lisää ensimmäinen
-                Hinta.fi-tuote.
-                PriceWatch tallentaa
-                tämänhetkisen hinnan ja
-                alkaa seurata muutoksia.
-              </p>
-
-
               <Button
                 size="lg"
-                className="mt-7"
+                className="mt-6"
 
                 onClick={() =>
                   setDialogOpen(true)
@@ -1309,10 +1312,6 @@ export default function Home() {
 
               <p className="font-medium">
                 Tuotteita ei löytynyt
-              </p>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Kokeile toista hakusanaa.
               </p>
 
             </CardContent>
@@ -1389,33 +1388,13 @@ export default function Home() {
 
                     <CardContent className="p-0">
 
-                      <div className="grid lg:grid-cols-[1fr_auto]">
+                      <div className="relative">
 
 
-                        <div className="p-5 sm:p-6">
+                        <div className="p-5 pt-16 sm:p-6 sm:pr-28 sm:pt-6">
 
 
                           <div className="flex flex-wrap items-center gap-2">
-
-                            <Badge
-                              variant="secondary"
-                              className="rounded-full"
-                            >
-                              Hinta.fi
-                            </Badge>
-
-
-                            <Badge
-                              variant="outline"
-                              className="rounded-full"
-                            >
-
-                              <Gauge className="mr-1 size-3.5" />
-
-                              Seurannassa
-
-                            </Badge>
-
 
                             {priceDown && (
 
@@ -1630,39 +1609,7 @@ export default function Home() {
 
                         {/* ACTIONS */}
 
-                        <div className="flex items-center gap-2 border-t bg-muted/20 p-4 lg:flex-col lg:justify-start lg:border-l lg:border-t-0">
-
-
-                          <Button
-                            variant="outline"
-                            className="flex-1 lg:w-36"
-
-                            disabled={
-                              checking ||
-                              deleting
-                            }
-
-                            onClick={() =>
-                              handleCheckNow(
-                                product.id
-                              )
-                            }
-                          >
-
-                            <RefreshCw
-                              className={cn(
-                                "size-4",
-
-                                checking &&
-                                  "animate-spin"
-                              )}
-                            />
-
-                            {checking
-                              ? "Tarkistetaan..."
-                              : "Tarkista nyt"}
-
-                          </Button>
+                        <div className="absolute right-4 top-4 flex items-center gap-2">
 
 
                           <a
@@ -1672,12 +1619,12 @@ export default function Home() {
 
                             rel="noreferrer"
 
-                            aria-label="Avaa Hinta.fi"
+                            aria-label="Avaa tuotesivu"
 
                             className={cn(
                               buttonVariants({
-                                variant: "outline",
-                                size: "icon",
+                                variant: "secondary",
+                                size: "icon-lg",
                               }),
 
                               deleting &&
@@ -1691,8 +1638,8 @@ export default function Home() {
 
 
                           <Button
-                            variant="outline"
-                            size="icon"
+                            variant="destructive"
+                            size="icon-lg"
 
                             disabled={
                               deleting ||

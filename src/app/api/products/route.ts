@@ -60,7 +60,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Virheellinen Hinta.fi-linkki.",
+            "Virheellinen tuotelinkki.",
         },
         {
           status: 400,
@@ -69,7 +69,7 @@ export async function POST(
     }
 
 
-    // Haetaan tuotteen nykyinen hinta Hinta.fi:stä.
+    // Haetaan tuotteen nykyinen hinta tuotesivulta.
     const hintaProduct =
       await fetchHintaProduct(
         result.data.url

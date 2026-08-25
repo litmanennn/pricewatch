@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PriceWatch",
   description:
-    "Oma hintavahti Hinta.fi-tuotteiden hintojen seurantaan.",
+    "Oma hintavahti tuotteiden hintojen seurantaan.",
 }
 
 
