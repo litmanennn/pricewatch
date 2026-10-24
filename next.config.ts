@@ -8,6 +8,10 @@ const nextConfig:
 
   output:
     "standalone",
+
+  outputFileTracingIncludes: {
+    "/api/*": ["./node_modules/playwright/**/*", "./node_modules/playwright-core/**/*"],
+  },
 }
 
 

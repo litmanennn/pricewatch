@@ -5,6 +5,21 @@ import {
   text,
 } from "drizzle-orm/sqlite-core"
 
+import type { AvailabilityStatus } from "@/lib/zelda-stores"
+
+export const availabilityChecks = sqliteTable("availability_checks", {
+  storeId: text("store_id").primaryKey(),
+  status: text("status").$type<AvailabilityStatus>().notNull(),
+  detail: text("detail").notNull(),
+  checkedAt: integer("checked_at", { mode: "timestamp_ms" }).notNull(),
+})
+
+export const availabilityNotifications = sqliteTable("availability_notifications", {
+  storeId: text("store_id").primaryKey(),
+  status: text("status").$type<"preorder" | "in_stock" | "out_of_stock">().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+})
+
 
 export const products =
   sqliteTable(

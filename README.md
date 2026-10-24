@@ -1,5 +1,68 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Zelda-saatavuusvahti
+
+Etusivun oma osio seuraa Nintendo Switch 2 The Legend of Zelda 40th Anniversary Edition
+-juhlaversiota kuudessa kaupassa: My Nintendo Store, Verkkokauppa.com, Amazon.de,
+POWER, Telia ja DNA. Voit tarkistaa kaikki kaupat kerralla tai yhden kaupan erikseen.
+Viimeisin tulos ja tarkistusaika tallennetaan SQLite-tietokantaan.
+
+Automaattinen hinta- ja saatavuustarkistus tehdään oletuksena **tunnin välein**
+palvelimen ollessa käynnissä. Tarkistusvälin voi muuttaa ympäristömuuttujalla
+`PRICE_CHECK_INTERVAL_HOURS`. Ensimmäinen automaattitarkistus tehdään tunnin kuluttua
+käynnistyksestä; heti tarkistuksen saa painikkeesta **Tarkista saatavuus**.
+
+Selain päivittää tallennetut saatavuustiedot minuutin välein. Epäselvä tieto tai
+kaupan estämä automaattitarkistus näytetään erikseen. Kauppalinkit toimivat myös
+silloin, kun automaattista saatavuutta ei voida vahvistaa.
+
+Saatavuuden tulkinnan testit: `npm test`.
+
+Zelda-saatavuusvahti käyttää samaa `DISCORD_WEBHOOK_URL`-asetusta kuin hintavahti.
+Lyhyt Discord-ilmoitus lähetetään kauppakohtaisesti, kun tuote havaitaan ensimmäisen
+kerran ennakkotilattavana tai varastossa, tai kun saatavuustila muuttuu. Sama tila
+ei aiheuta uutta ilmoitusta joka tunti. Vahvistettu loppuminen mahdollistaa uuden
+hälytyksen seuraavasta saatavuudesta. Tarkistusvirhe ei nollaa ilmoitustietoa.
+Epäonnistunutta lähetystä yritetään uudelleen seuraavalla saatavuustarkistuksella.
+
+`npm run test:discord` lähettää yhden selvästi merkityn testiviestin määritettyyn
+webhookiin. Tavallinen `npm test` käyttää testitietokantaa ja simuloitua Discordia.
+
+Amazon ja Nintendo Store tarkistetaan Playwrightilla sekä tunnin automaattiajossa
+että käsin tarkistettaessa. Chromium käynnistetään erikseen kutakin kauppaa varten
+ja suljetaan aina tarkistuksen lopuksi, myös virhetilanteessa. Selainajoja on
+kerrallaan enintään yksi. Käynnistys aikakatkaistaan 15 sekunnissa ja itse
+tarkistus viimeistään 60 sekunnissa. Tarkistusten välillä selain ei jää käyntiin.
+
+Erillinen koe samalla selainkoodilla:
+
+```bash
+npx playwright install chromium
+npm run test:stores
+# Vain yksi kauppa:
+npm run test:stores -- nintendo
+```
+
+Selain säilyttää vain oman profiilinsa levyllä tietokannan vieressä sijaitsevassa
+`playwright/`-hakemistossa (oletuksena `data/playwright/`). Profiilien hakemiston voi
+halutessaan määrittää muuttujalla `AVAILABILITY_BROWSER_PROFILE_DIR`.
+Kokeen raportti tallennetaan hakemistoon `data/browser-checks/`. Nintendo-koe
+tallentaa `nintendo.png`-kuvakaappauksen ja `nintendo.json`-raportin, josta näet
+sivun osoitteen, otsikon, sivulta luetun saatavuustiedon, tarkistusajan ja
+vahvistuksen selaimen sulkemisesta. Amazonille syntyvät vastaavat tiedostot.
+Näitä hakemistoja
+ei lisätä versionhallintaan. Erillinen koe ei muuta tuotannon saatavuustietoja
+eikä lähetä Discord-viestejä.
+
+Docker-image sisältää Chromiumin ja sen Linux-riippuvuudet. Compose käyttää
+Playwrightin [virallista seccomp-profiilia](https://github.com/microsoft/playwright/blob/v1.64.0/utils/docker/seccomp_profile.json),
+jotta selain voi toimia omalla suojaeristyksellään. Säilytä
+`docker/playwright-seccomp.json` compose-tiedoston rinnalla samalla polulla.
+`init: true` huolehtii päättyneiden lapsiprosessien siivouksesta.
+
+PR:n GitHub Actions tarkistaa lintin, testit ja ARM64-Docker-buildin ennen
+yhdistämistä. Docker-image julkaistaan vasta `main`-haaraan yhdistämisen jälkeen.
+
 ## Getting Started
 
 First, run the development server:

@@ -2,9 +2,11 @@ import {
   checkAllProducts,
 } from "@/lib/check-all-products"
 
+import { checkAvailability } from "@/lib/check-availability"
+
 
 const DEFAULT_INTERVAL_HOURS =
-  6
+  1
 
 
 type PriceSchedulerGlobal = {
@@ -69,14 +71,16 @@ export async function runPriceCheck() {
 
 
   try {
-    const result =
-      await checkAllProducts()
+    const [result, availability] = await Promise.all([
+      checkAllProducts(),
+      checkAvailability(),
+    ])
 
     globalForPriceWatch
       .priceWatchLastCheckAt =
         new Date().toISOString()
 
-    return result
+    return { ...result, availability }
 
   } finally {
     globalForPriceWatch

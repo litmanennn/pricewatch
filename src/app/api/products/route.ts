@@ -2,7 +2,7 @@ import { desc } from "drizzle-orm"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-import { db } from "@/db"
+import { db, ensureDatabaseInitialized } from "@/db"
 import {
   priceHistory,
   products,
@@ -18,6 +18,7 @@ const createProductSchema =
 
 export async function GET() {
   try {
+    ensureDatabaseInitialized()
     const result =
       await db
         .select()
@@ -70,6 +71,7 @@ export async function POST(
 
 
     // Haetaan tuotteen nykyinen hinta tuotesivulta.
+    ensureDatabaseInitialized()
     const hintaProduct =
       await fetchHintaProduct(
         result.data.url

@@ -55,6 +55,7 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 ENV DB_FILE_NAME=/app/data/pricewatch.db
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 
 RUN groupadd \
@@ -84,6 +85,11 @@ COPY --from=builder \
   --chown=nextjs:nodejs \
   /app/.next/static \
   ./.next/static
+
+# Install the browser and Linux libraries in the runtime image. Only the
+# headless Chromium build is needed; no browser process runs during the build.
+RUN node node_modules/playwright/cli.js install --with-deps --only-shell chromium \
+    && rm -rf /var/lib/apt/lists/*
 
 
 RUN mkdir -p /app/data \

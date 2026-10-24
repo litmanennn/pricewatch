@@ -48,7 +48,7 @@ export const db =
 
 
 type PriceWatchDatabaseGlobal = {
-  priceWatchDatabaseInitialized?: boolean
+  priceWatchDatabaseVersion?: number
 }
 
 
@@ -69,7 +69,7 @@ export function ensureDatabaseInitialized() {
 
   if (
     globalForDatabase
-      .priceWatchDatabaseInitialized
+      .priceWatchDatabaseVersion === 2
   ) {
     return
   }
@@ -91,6 +91,19 @@ export function ensureDatabaseInitialized() {
 
     sqlite.exec(`
       PRAGMA busy_timeout = 5000;
+
+      CREATE TABLE IF NOT EXISTS availability_checks (
+        store_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        detail TEXT NOT NULL,
+        checked_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS availability_notifications (
+        store_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
 
       CREATE TABLE IF NOT EXISTS products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,8 +148,8 @@ export function ensureDatabaseInitialized() {
 
 
     globalForDatabase
-      .priceWatchDatabaseInitialized =
-        true
+      .priceWatchDatabaseVersion =
+        2
 
 
     console.log(
