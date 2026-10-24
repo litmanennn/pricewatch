@@ -10,6 +10,47 @@ type SendPriceDropNotificationInput = {
 type DiscordNotificationResult = {
   configured: boolean
   sent: boolean
+  messageId?: string
+}
+
+export async function sendAvailabilityNotification(input: {
+  storeName: string
+  storeUrl: string
+  status: "preorder" | "in_stock"
+  test?: boolean
+}): Promise<DiscordNotificationResult> {
+  const configuredUrl = process.env.DISCORD_WEBHOOK_URL?.trim()
+  if (!configuredUrl) return { configured: false, sent: false }
+
+  try {
+    const webhookUrl = new URL(configuredUrl)
+    // Ask Discord to confirm that the message was actually saved.
+    webhookUrl.searchParams.set("wait", "true")
+    const content = input.test
+      ? "🧪 **PriceWatch – Zelda-saatavuusvahdin testiviesti**\nDiscord-yhteys toimii. Tämä on testi, ei saatavuushavainto."
+      : `🎮 **Zelda-juhlaversio ${input.status === "preorder" ? "ennakkotilattavissa" : "varastossa"}!**\nNintendo Switch 2 · The Legend of Zelda 40th Anniversary Edition\n**${input.storeName}**\n${input.storeUrl}`
+
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "PriceWatch", content, allowed_mentions: { parse: [] } }),
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (!response.ok) {
+      console.error(`[PriceWatch] Saatavuusilmoituksen lähetys epäonnistui (HTTP ${response.status}).`)
+      return { configured: true, sent: false }
+    }
+    const message = await response.json().catch(() => null)
+    if (typeof message?.id !== "string") {
+      console.error("[PriceWatch] Discord ei vahvistanut saatavuusilmoituksen tallennusta.")
+      return { configured: true, sent: false }
+    }
+    return { configured: true, sent: true, messageId: message.id }
+  } catch {
+    // Never log the error object: it may contain the secret webhook URL.
+    console.error("[PriceWatch] Saatavuusilmoituksen Discord-yhteys epäonnistui.")
+    return { configured: true, sent: false }
+  }
 }
 
 

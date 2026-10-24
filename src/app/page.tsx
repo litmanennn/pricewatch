@@ -41,6 +41,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ZeldaAvailability } from "@/components/zelda-availability"
 import { cn } from "@/lib/utils"
 
 
@@ -1186,6 +1187,8 @@ export default function Home() {
 
         </section>
 
+
+        <ZeldaAvailability scheduler={scheduler} />
 
         {/* PRODUCTS HEADER */}
 
